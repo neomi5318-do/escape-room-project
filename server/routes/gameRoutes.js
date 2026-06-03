@@ -5,9 +5,9 @@ import authMiddleware from '../middleware/authMiddleware.js';
 const router = express.Router();
 
 // כל פעולות המשחק דורשות משתמש מחובר (בין אם הוא פלייר או מפתח שבודק את החדר)
-router.post('/room/:roomId/enter', authMiddleware.verifyDeveloper, gameController.enterRoom);
-router.post('/question/:questionId/hint', authMiddleware.verifyDeveloper, gameController.requestHint);
-router.post('/question/:questionId/submit', authMiddleware.verifyDeveloper, gameController.submitAnswer);
-router.post('/room/:roomId/finish', authMiddleware.verifyDeveloper, gameController.finishRoom);
+router.post('/room/:roomId/enter', authMiddleware.verifyToken, authMiddleware.restrictTo('player'), gameController.enterRoom);
+router.post('/question/:questionId/hint', authMiddleware.verifyToken, authMiddleware.restrictTo('player'), gameController.requestHint);
+router.post('/question/:questionId/submit', authMiddleware.verifyToken, authMiddleware.restrictTo('player'), gameController.submitAnswer);
+router.post('/room/:roomId/finish', authMiddleware.verifyToken, authMiddleware.restrictTo('player'), gameController.finishRoom);
 
 export default router;

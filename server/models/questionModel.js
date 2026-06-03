@@ -16,10 +16,10 @@ const findByRoom = async (roomId) => {
 };
 
 // 3. מציאת שאלה ספציפית לפי ה-ID שלה (מעולה לבדיקות אבטחה ותקינות)
-// const findById = async (questionId) => {
-//     const [rows] = await db.query('SELECT * FROM questions WHERE id = ?', [questionId]);
-//     return rows[0]; // מחזיר את השאלה הבודדת או undefined
-// };
+const findById = async (questionId) => {
+    const [rows] = await db.query('SELECT * FROM questions WHERE id = ?', [questionId]);
+    return rows[0]; // מחזיר את השאלה הבודדת או undefined
+};
 
 // 4. עדכון שאלה קיימת
 const update = async (questionId, questionText, correctAnswer, hintText) => {
@@ -37,7 +37,7 @@ const remove = async (questionId) => {
 export default {
     create,
     findByRoom,
-    // findById,
+    findById,
     update,
     remove
 };
