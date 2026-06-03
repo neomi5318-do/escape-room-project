@@ -1,13 +1,13 @@
 import db from '../config/db.js';
 
-const create = async (title, creatorId, bgImageId, bgAudioId, timerSeconds, minPoints, difficulty) => {
+const create = async (title, creatorId, bg_image_id, bg_audio_id, timer_seconds, min_points_required, difficulty_level) => {
     const [result] = await db.query(
         `INSERT INTO rooms 
         (title, creator_id, bg_image_id, bg_audio_id, timer_seconds, min_points_required, difficulty_level) 
         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [title, creatorId, bgImageId, bgAudioId, timerSeconds, minPoints, difficulty]
+        [title, creatorId, bg_image_id, bg_audio_id, timer_seconds, min_points_required, difficulty_level]
     );
-    return result.insertId; // מחזיר את ה-ID של החדר החדש
+    return result.insertId;
 };
 
 // 2. מציאת כל החדרים שנוצרו על ידי מפתח ספציפי
