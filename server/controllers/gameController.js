@@ -1,28 +1,45 @@
 import GameModel from '../models/gameModel.js';
 import QuestionModel from '../models/questionModel.js';
+import User from '../models/userModel.js';
 
 // 1. כניסה לחדר / תחילת משחק
+import RoomModel from '../models/roomModel.js'; // אל תשכחי לייבא את זה למעלה!
+
 const enterRoom = async (req, res) => {
     const { roomId } = req.params;
-    const userId = req.user.id; // מגיע מהטוקן המאובטח שלך
+    const userId = req.user.id;
 
     try {
-        // שולפים את כל השאלות של החדר
+        // 1. שולפים את פרטי החדר המלאים (עם כתובות התמונה והסאונד)
+        const roomDetails = await RoomModel.getFullRoomDetails(roomId);
+        if (!roomDetails) {
+            return res.status(404).json({ success: false, message: "החדר לא נמצא" });
+        }
+
+        // 2. שולפים את כל השאלות של החדר
         const questions = await QuestionModel.findByRoom(roomId);
         if (questions.length === 0) {
             return res.status(400).json({ success: false, message: "בחדר זה עדיין אין שאלות" });
         }
 
-        // יוצרים או מאפסים רשומת התקדמות בחדר
+        // 3. שולפים את האלמנטים המיוחדים של החדר (מפות/רמזים חזותיים)
+        const roomElements = await RoomModel.getRoomElements(roomId);
+
+        // 4. יוצרים או מאפסים רשומת התקדמות בחדר לשחקן הזה
         await GameModel.createProgress(userId, roomId);
 
-        // מחזירים את השאלות (בלי התשובות והרמזים כדי שהשחקן לא ירמה ב-F12!)
+        // 5. מנקים את התשובות והרמזים מהשאלות כדי שהשחקן לא ירמה ב-F12
         const safeQuestions = questions.map(q => ({ id: q.id, question_text: q.question_text }));
 
+        // 6. מחזירים ללקוח אובייקט עשיר ומסודר שמכיל הכל!
         res.json({
             success: true,
             message: "ברוכים הבאים לחדר הבריחה!",
-            questions: safeQuestions
+            gameData: {
+                room: roomDetails,          // טיימר, רמת קושי, תמונת רקע ואודיו
+                elements: roomElements,     // כפתורים ופופ-אפים לפתיחה בחדר
+                questions: safeQuestions    // השאלות שהשחקן צריך לפתור
+            }
         });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
@@ -119,9 +136,20 @@ const finishRoom = async (req, res) => {
     }
 };
 
+// קבלת טבלת המובילים
+const getLeaderboard = async (req, res) => {
+    try {
+        const topPlayers = await User.getTopPlayers(); 
+        res.json({ success: true, leaderboard: topPlayers });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+};
+
 export default {
     enterRoom,
     requestHint,
     submitAnswer,
-    finishRoom
+    finishRoom,
+    getLeaderboard
 };

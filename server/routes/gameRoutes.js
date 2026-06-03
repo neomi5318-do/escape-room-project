@@ -9,5 +9,6 @@ router.post('/room/:roomId/enter', authMiddleware.verifyToken, authMiddleware.re
 router.post('/question/:questionId/hint', authMiddleware.verifyToken, authMiddleware.restrictTo('player'), gameController.requestHint);
 router.post('/question/:questionId/submit', authMiddleware.verifyToken, authMiddleware.restrictTo('player'), gameController.submitAnswer);
 router.post('/room/:roomId/finish', authMiddleware.verifyToken, authMiddleware.restrictTo('player'), gameController.finishRoom);
-
+// כולם יכולים לראות את טבלת המובילים (לכן verifyToken רגיל מספיק פה)
+router.get('/leaderboard', authMiddleware.verifyToken, gameController.getLeaderboard);
 export default router;

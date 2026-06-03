@@ -1,6 +1,8 @@
 import db from '../config/db.js'; // שינוי ל-import והוספת סיומת .js
 
 const User = {
+
+    
     // מציאת משתמש לפי שם המשתמש שלו
     findByUsername: async (username) => {
         const [rows] = await db.query('SELECT * FROM users WHERE username = ?', [username]);
@@ -14,6 +16,13 @@ const User = {
             [username, password, role]
         );
         return result.insertId; 
+    }
+    ,
+    getTopPlayers: async () => {
+        const [rows] = await db.query(
+            'SELECT username, points FROM users WHERE role = "player" ORDER BY points DESC LIMIT 10'
+        );
+        return rows;
     }
 };
 
