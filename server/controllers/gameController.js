@@ -15,10 +15,9 @@ const enterRoom = async (req, res) => {
         if (!roomDetails) {
             return res.status(404).json({ success: false, message: "החדר לא נמצא" });
         }
-
+        const safeQuestions = await QuestionModel.findSafeByRoom(roomId);
         // 2. שולפים את כל השאלות של החדר
-        const questions = await QuestionModel.findByRoom(roomId);
-        if (questions.length === 0) {
+        if (safeQuestions.length === 0) {
             return res.status(400).json({ success: false, message: "בחדר זה עדיין אין שאלות" });
         }
 
@@ -27,9 +26,6 @@ const enterRoom = async (req, res) => {
 
         // 4. יוצרים או מאפסים רשומת התקדמות בחדר לשחקן הזה
         await GameModel.createProgress(userId, roomId);
-
-        // 5. מנקים את התשובות והרמזים מהשאלות כדי שהשחקן לא ירמה ב-F12
-        const safeQuestions = questions.map(q => ({ id: q.id, question_text: q.question_text }));
 
         // 6. מחזירים ללקוח אובייקט עשיר ומסודר שמכיל הכל!
         res.json({

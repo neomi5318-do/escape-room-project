@@ -22,9 +22,21 @@ app.use('/api/game', gameRoutes);
 app.get('/api/health', (req, res) => {
     res.json({ status: "Server is running perfectly with Rooms and Auth!" });
 });
+//Catch-all 404 Middleware
+app.use((req, res) => {
+    res.status(404).json({
+        success: false,
+        message: `אופס! הכתובת שחיפשת לא קיימת בשרת: ${req.originalUrl}`,
+        hint: "בדקו שוב את ה-URL או את סוג הבקשה (GET/POST)"
+    });
+});
 
 // הגדרת הפורט שעליו השרת יאזין
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server is flying on port ${PORT} with MVC Architecture!`);
 });
+
+
+
+

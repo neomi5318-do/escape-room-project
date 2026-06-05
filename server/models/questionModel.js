@@ -8,7 +8,12 @@ const create = async (roomId, questionText, correctAnswer, hintText) => {
     );
     return result.insertId;
 };
-
+const findSafeByRoom = async (roomId) => {
+    // שולפים אך ורק את ה-ID והטקסט של השאלה
+    const query = 'SELECT id, question_text FROM questions WHERE room_id = ?';
+    const [rows] = await db.query(query, [roomId]);
+    return rows;
+};
 // 2. מציאת כל השאלות של חדר מסוים
 const findByRoom = async (roomId) => {
     const [rows] = await db.query('SELECT * FROM questions WHERE room_id = ?', [roomId]);
@@ -36,6 +41,7 @@ const remove = async (questionId) => {
 
 export default {
     create,
+    findSafeByRoom,
     findByRoom,
     findById,
     update,
