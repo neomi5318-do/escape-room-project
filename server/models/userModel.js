@@ -1,8 +1,7 @@
-import db from '../config/db.js'; // שינוי ל-import והוספת סיומת .js
+import db from '../config/db.js'; 
 
 const User = {
 
-    
     // מציאת משתמש לפי שם המשתמש שלו
     findByUsername: async (username) => {
         const [rows] = await db.query('SELECT * FROM users WHERE username = ?', [username]);

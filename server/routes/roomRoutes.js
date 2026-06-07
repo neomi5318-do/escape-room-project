@@ -16,15 +16,16 @@ router.post('/create',
 
 // עדכון ומחיקה של חדרים
 router.put('/update/:id',
-     authMiddleware.verifyToken,
-      authMiddleware.restrictTo('developer'),
-       roomController.updateRoom
-    );
+    authMiddleware.verifyToken,
+    authMiddleware.restrictTo('developer'),
+    validationMiddleware.validateRoomInput,
+    roomController.updateRoom
+);
 
 router.delete('/delete/:id',
-     authMiddleware.verifyToken, 
-     authMiddleware.restrictTo('developer'),
-      roomController.deleteRoom
-    );
+    authMiddleware.verifyToken,
+    authMiddleware.restrictTo('developer'),
+    roomController.deleteRoom
+);
 
 export default router;
