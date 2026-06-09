@@ -1,6 +1,7 @@
 import express from 'express';
 import gameController from '../controllers/gameController.js';
 import authMiddleware from '../middleware/authMiddleware.js';
+import validationMiddleware from '../middleware/validationMiddleware.js';
 
 const router = express.Router();
 

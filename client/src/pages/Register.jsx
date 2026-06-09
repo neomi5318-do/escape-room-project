@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { registerUser } from '../api/authApi';
+import { AuthContext } from '../context/AuthContext';
 
 const Register = () => {
     const [username, setUsername] = useState('');
@@ -8,7 +9,7 @@ const Register = () => {
     const [role, setRole] = useState('player'); // ברירת מחדל: שחקן
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
-    
+    const { authenticate } = useContext(AuthContext);
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -17,15 +18,18 @@ const Register = () => {
         setSuccess(false);
 
         try {
-            // קוראים לפונקציית ההרשמה מה-API
-            const data = await registerUser(username, password, role);
             
-            if (data.success) {
-                setSuccess(true);
-                // אחרי 2 שניות, נעביר את המשתמש אוטומטית לעמוד ההתחברות
-                setTimeout(() => {
-                    navigate('/login');
-                }, 2000);
+            const data = await registerUser(username, password, role);
+           if (data.success) {
+                // 1. שומרים את המשתמש בלוקל סטורג' ובהסטייט הגלובלי
+                authenticate(data.user, data.token);
+
+                // 2. מנתבים ישירות ליעד בלי לעבור בלוגין!
+                if (data.user.role === 'developer') {
+                    navigate('/developer');
+                } else {
+                    navigate('/lobby');
+                }
             }
         } catch (err) {
             setError(err.response?.data?.message || 'אירעה שגיאה בהרשמה');

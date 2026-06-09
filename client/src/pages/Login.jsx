@@ -11,7 +11,7 @@ const Login = () => {
     const [error, setError] = useState('');
     
     // משיכת הפונקציה login מתוך ה-Context שלנו
-    const { login } = useContext(AuthContext);
+    const { authenticate } = useContext(AuthContext);
     
     // כלי הניווט של React Router
     const navigate = useNavigate();
@@ -26,7 +26,7 @@ const Login = () => {
             
             if (data.success) {
                 // 2. עדכון ה-Context והלוקל סטורג' (השרת שלך מחזיר user ו-token)
-                login(data.user, data.token);
+                authenticate(data.user, data.token);
 
                 // 3. הניתוב החכם! לאן הולכים עכשיו?
                 if (data.user.role === 'developer') {

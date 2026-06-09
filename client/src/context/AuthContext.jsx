@@ -13,18 +13,24 @@ export const AuthProvider = ({ children }) => {
         const storedUser = localStorage.getItem('user');
         const storedToken = localStorage.getItem('token');
 
-        if (storedUser && storedToken) {
+        if (storedUser && storedUser !== 'undefined' && storedToken)  {
             setUser(JSON.parse(storedUser)); // הופכים את הטקסט חזרה לאובייקט JavaScript
         }
         setLoading(false); // סיימנו לבדוק, האפליקציה מוכנה לפעולה
     }, []);
 
     // פונקציה שתופעל מהעמוד של ה-Login אחרי שהשרת החזיר תשובה מושלמת
-    const login = (userData, token) => {
+    const authenticate = (userData, token) => {
+        // הוספנו בדיקה: אם אין יוזר או טוקן, אל תשמור כלום!
+        if (!userData || !token) {
+            console.error("שגיאה: השרת לא החזיר משתמש או טוקן", { userData, token });
+            return; 
+        }
         setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData)); // לוקל סטורג' יודע לשמור רק טקסט
-        localStorage.setItem('token', token); // שומרים את ה-JWT
+        localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem('token', token);
     };
+    
 
     // פונקציית התנתקות מהמערכת
     const logout = () => {
@@ -34,7 +40,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading }}>
+        <AuthContext.Provider value={{ user, authenticate, logout, loading }}>
             {children}
         </AuthContext.Provider>
     );

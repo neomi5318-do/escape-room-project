@@ -1,7 +1,7 @@
 import express from 'express';
 import questionController from '../controllers/questionController.js';
 import authMiddleware from '../middleware/authMiddleware.js';
-
+import validationMiddleware from '../middleware/validationMiddleware.js';
 const router = express.Router();
 
 // נתיבים שדורשים את ה-ID של החדר (נפוץ ביצירה ושליפה של הכל)

@@ -12,7 +12,6 @@ const app = express();
 // מידלוורס גלובליים
 app.use(cors());
 app.use(express.json()); // מאפשר לשרת לקרוא מידע שמגיע בפורמט JSON מה-React
-
 // חיבור הראוטים השונים של האפליקציה לשרת
 app.use('/api/auth', authRoutes); // נתיבי התחברות והרשמה
 app.use('/api/rooms', roomRoutes); // נתיבי ניהול החדרים (מוגנים ע"י טוקן)

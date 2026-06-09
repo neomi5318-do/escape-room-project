@@ -1,6 +1,4 @@
 import axios from 'axios';
-
-// כתובת השרת שלך - ודאי שהפורט (5000) תואם לשרת ה-Node.js שלך
 const BASE_URL = 'http://localhost:5000/api/auth'; 
 
 // 1. פונקציית התחברות

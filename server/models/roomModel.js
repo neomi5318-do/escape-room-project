@@ -1,8 +1,20 @@
 import db from '../config/db.js';
-// שליפת פרטי החדר המלאים יחד עם הקישורים (URL) של התמונה והסאונד מה-assets
+
+// 1. שליפת כל האתגרים (ללובי של השחקנים)
+const getAllRooms = async () => {
+    const query = `
+        SELECT rooms.*, cover_assets.file_path AS cover_image_url 
+        FROM rooms 
+        LEFT JOIN assets AS cover_assets ON rooms.cover_image_id = cover_assets.id
+    `;
+    const [rows] = await db.query(query);
+    return rows;
+};
+
+// 2. שליפת פרטי אתגר המלאים (כששחקן נכנס לשחק)
 const getFullRoomDetails = async (roomId) => {
     const query = `
-        SELECT r.id, r.title, r.timer_seconds, r.difficulty_level,
+        SELECT r.id, r.title, r.description, r.timer_seconds, r.difficulty_level,
                img.file_path AS bg_image_url,
                aud.file_path AS bg_audio_url
         FROM rooms r
@@ -14,7 +26,7 @@ const getFullRoomDetails = async (roomId) => {
     return rows[0];
 };
 
-// שליפת אלמנטים מיוחדים שיש בחדר (כמו פופ-אפים ומפות)
+// 3. שליפת אלמנטים מיוחדים שיש באתגר
 const getRoomElements = async (roomId) => {
     const query = `
         SELECT e.id, e.element_type, e.button_label, a.file_path AS asset_url
@@ -26,43 +38,50 @@ const getRoomElements = async (roomId) => {
     return rows;
 };
 
-
-const create = async (title, creatorId, bg_image_id, bg_audio_id, timer_seconds, min_points_required, difficulty_level) => {
+// 4. יצירת אתגר חדש (עודכן עם תיאור ותמונת קאבר!)
+const create = async (title, description, creatorId, coverImageId, bgImageId, bgAudioId, timerSeconds, minPoints, difficulty) => {
     const [result] = await db.query(
         `INSERT INTO rooms 
-        (title, creator_id, bg_image_id, bg_audio_id, timer_seconds, min_points_required, difficulty_level) 
-        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [title, creatorId, bg_image_id, bg_audio_id, timer_seconds, min_points_required, difficulty_level]
+        (title, description, creator_id, cover_image_id, bg_image_id, bg_audio_id, timer_seconds, min_points_required, difficulty_level) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [title, description, creatorId, coverImageId, bgImageId, bgAudioId, timerSeconds, minPoints, difficulty]
     );
     return result.insertId;
 };
 
-// 2. מציאת כל החדרים שנוצרו על ידי מפתח ספציפי
+// 5. מציאת כל האתגרים שנוצרו על ידי מפתח ספציפי (לדאשבורד המפתחים - עודכן עם JOIN לתמונה!)
 const findByCreator = async (creatorId) => {
-    const [rows] = await db.query('SELECT * FROM rooms WHERE creator_id = ?', [creatorId]);
+    const query = `
+        SELECT rooms.*, cover_assets.file_path AS cover_image_url 
+        FROM rooms 
+        LEFT JOIN assets AS cover_assets ON rooms.cover_image_id = cover_assets.id
+        WHERE rooms.creator_id = ?
+    `;
+    const [rows] = await db.query(query, [creatorId]);
     return rows;
 };
 
-// 3. עדכון חדר קיים
-const update = async (roomId, title, bgImageId, bgAudioId, timerSeconds, minPoints, difficulty) => {
+// 6. עדכון אתגר קיים (עודכן עם תיאור ותמונת קאבר!)
+const update = async (roomId, title, description, coverImageId, bgImageId, bgAudioId, timerSeconds, minPoints, difficulty) => {
     await db.query(
         `UPDATE rooms 
-        SET title = ?, bg_image_id = ?, bg_audio_id = ?, timer_seconds = ?, min_points_required = ?, difficulty_level = ? 
+        SET title = ?, description = ?, cover_image_id = ?, bg_image_id = ?, bg_audio_id = ?, timer_seconds = ?, min_points_required = ?, difficulty_level = ? 
         WHERE id = ?`,
-        [title, bgImageId, bgAudioId, timerSeconds, minPoints, difficulty, roomId]
+        [title, description, coverImageId, bgImageId, bgAudioId, timerSeconds, minPoints, difficulty, roomId]
     );
 };
 
-// 4. מחיקת חדר (בגלל שהגדרנו ON DELETE CASCADE ב-SQL, זה ימחק אוטומטית גם את השאלות שלו!)
+// 7. מחיקת אתגר (מוחק הכל בזכות ה-CASCADE)
 const remove = async (roomId) => {
     await db.query('DELETE FROM rooms WHERE id = ?', [roomId]);
 };
 
 export default {
+    getAllRooms,
     getFullRoomDetails,
     getRoomElements,
     create,
     findByCreator,
     update,
     remove
-};
+}; 
