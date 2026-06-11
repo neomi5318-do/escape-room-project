@@ -6,6 +6,7 @@ import Register from './pages/Register';
 import Lobby from './pages/Lobby';
 import DeveloperDashboard from './pages/DeveloperDashboard';
 import CreateRoom from './pages/CreateRoom';  
+import ManageRoomQuestions from './pages/ManageRoomQuestions';  
 function App() {
   return (
     <Routes>
@@ -15,6 +16,7 @@ function App() {
       <Route path="/lobby" element={<Lobby />} />
       <Route path="/developer" element={<DeveloperDashboard />} />
       <Route path="/developer/create-room" element={<CreateRoom />} />
+      <Route path="/manage-room/:roomId" element={<ManageRoomQuestions />} />
     </Routes>
   );
 }

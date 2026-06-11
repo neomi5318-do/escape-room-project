@@ -44,15 +44,15 @@ const CreateRoom = () => {
             };
 
             const data = await createRoom(roomDataForServer, token);
-            
+
             if (data.success) {
                 // נניח שהשרת מחזיר לנו את ה-ID של החדר החדש שנוצר תחת data.roomId (או data.id)
-                const newRoomId = data.roomId || data.id; 
-                
+                const newRoomId = data.roomId || data.id;
+
                 if (newRoomId) {
                     alert('ההגדרות נשמרו! עוברים להוספת החידות... 🚀');
                     // 3. ניווט לעמוד יצירת החידות עם ה-ID של החדר
-                    navigate(`/create-questions/${newRoomId}`); 
+                    navigate(`/manage-room/${newRoomId}`);
                 } else {
                     // מקרה גיבוי אם השרת לא החזיר ID
                     alert('האתגר נוצר בהצלחה!');
@@ -69,7 +69,7 @@ const CreateRoom = () => {
     return (
         <div style={{ backgroundColor: '#f3f4f6', minHeight: '100vh', padding: '40px 20px', fontFamily: 'sans-serif', direction: 'rtl' }}>
             <div style={{ maxWidth: '800px', margin: '0 auto', backgroundColor: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-                
+
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #e5e7eb', paddingBottom: '20px', marginBottom: '30px' }}>
                     <h1 style={{ margin: 0, color: '#8b5cf6' }}>שלב 1: הגדרות החדר</h1>
                     <button type="button" onClick={() => navigate('/developer')} style={{ background: 'none', border: '1px solid #d1d5db', padding: '8px 15px', borderRadius: '6px', cursor: 'pointer' }}>
@@ -80,7 +80,7 @@ const CreateRoom = () => {
                 {error && <div style={{ backgroundColor: '#fee2e2', color: '#ef4444', padding: '10px', borderRadius: '6px', marginBottom: '20px', textAlign: 'center' }}>{error}</div>}
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    
+
                     {/* כותרת ותיאור */}
                     <div>
                         <label style={labelStyle}>שם האתגר (יופיע בלובי):</label>
