@@ -3,48 +3,43 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { getAllRooms } from '../api/roomApi';
 
+// הכלים הגנריים שלנו!
+import Navbar from '../components/Navbar';
+import Modal from '../components/Modal';
+import { useFetch } from '../hooks/useFetch';
+
 const Lobby = () => {
-    const { user, logout } = useContext(AuthContext);
+    // הוצאנו מפה את ה-logout, כי ה-Navbar שלנו מטפל בזה עכשיו
+    const { user } = useContext(AuthContext); 
     const navigate = useNavigate();
-
-    const [rooms, setRooms] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
     const token = localStorage.getItem('token');
     const playerPoints = user?.points || 0;
 
+    // 1. קריאה לשרת דרך ההוק המותאם אישית שלנו
+    const { data, loading, error } = useFetch(getAllRooms, token);
+    const [rooms, setRooms] = useState([]);
+    
+    // 2. סטייט להדלקת מודאל במקום ה-alert
+    const [lockedMessage, setLockedMessage] = useState(''); 
+
+    // כשמגיעים הנתונים מהשרת (דרך ההוק), שומרים אותם
     useEffect(() => {
-        const fetchRooms = async () => {
-            try {
-                const data = await getAllRooms(token);
-                if (data.success) {
-                    setRooms(data.rooms);
-                }
-            } catch (err) {
-                setError(err.response?.data?.message || 'שגיאה בתקשורת מול השרת.');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (token) {
-            fetchRooms();
-        } else {
-            navigate('/login');
+        if (data && data.success) {
+            setRooms(data.rooms);
         }
-    }, [token, navigate]);
+    }, [data]);
 
-    const handleLogout = () => {
-        logout();
-        navigate('/login');
-    };
+    // הגנת ניווט למשתמשים לא מחוברים
+    useEffect(() => {
+        if (!token) navigate('/login');
+    }, [token, navigate]);
 
     const handleRoomClick = (room) => {
         if (playerPoints >= room.min_points_required) {
             navigate(`/room/${room.id}`);
         } else {
-            alert(`החדר נעול! עליך לצבור עוד ${room.min_points_required - playerPoints} נקודות כדי להיכנס.`);
+            // במקום alert מכוער, מדליקים את הסטייט של המודאל
+            setLockedMessage(`החדר נעול! עליך לצבור עוד ${room.min_points_required - playerPoints} נקודות כדי להיכנס.`);
         }
     };
 
@@ -59,23 +54,8 @@ const Lobby = () => {
     return (
         <div style={{ backgroundColor: '#0f172a', minHeight: '100vh', color: '#f8fafc', fontFamily: 'system-ui, sans-serif' }}>
             
-            {/* סרגל ניווט עליון */}
-            <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 40px', backgroundColor: '#1e293b', borderBottom: '2px solid #3b82f6', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)' }}>
-                <div style={{ display: 'flex', gap: '25px', alignItems: 'center' }}>
-                    <h2 style={{ margin: 0, color: '#60a5fa', letterSpacing: '1px' }}>EscapeMaster</h2>
-                    <button onClick={() => navigate('/profile')} style={navButtonStyle}>הפרופיל שלי 👤</button>
-                </div>
-                
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                    <span style={{ fontSize: '17px' }}>שלום, <b style={{ color: '#e2e8f0' }}>{user?.username}</b></span>
-                    <span style={{ fontSize: '16px', color: '#fbbf24', fontWeight: 'bold', backgroundColor: 'rgba(251, 191, 36, 0.1)', padding: '6px 16px', borderRadius: '20px', border: '1px solid #fbbf24' }}>
-                        נקודות: {playerPoints} 💎
-                    </span>
-                    <button onClick={handleLogout} style={{ ...navButtonStyle, color: '#f87171' }}>
-                        התנתקות 🚪
-                    </button>
-                </div>
-            </nav>
+            {/* 3. סרגל הניווט הגנרי - העברנו לו Props של שחקן כדי שיציג את הניקוד */}
+            <Navbar points={playerPoints} showProfile={true} />
 
             {/* אזור כותרת */}
             <div style={{ textAlign: 'center', padding: '50px 20px 30px' }}>
@@ -91,7 +71,6 @@ const Lobby = () => {
                 {rooms.map((room) => {
                     const isLocked = playerPoints < room.min_points_required;
                     
-                    // טיפול בתמונה: אם יש נתיב מה-SQL נשתמש בו (צריך שהשרת יגיש קבצים סטטיים), אחרת תמונת ברירת מחדל
                     const defaultImage = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=600&auto=format&fit=crop";
                     const imageUrl = room.cover_image_url ? `http://localhost:5000/${room.image_url}` : defaultImage;
 
@@ -151,19 +130,21 @@ const Lobby = () => {
                     );
                 })}
             </div>
+
+            {/* 4. מודאל ההתראה שמחליף את ה-alert של חדר נעול */}
+            {lockedMessage && (
+                <Modal 
+                    title="החדר נעול 🔒"
+                    titleColor="#f87171"
+                    message={lockedMessage}
+                    confirmText="הבנתי"
+                    confirmType="primary"
+                    onConfirm={() => setLockedMessage('')} 
+                />
+            )}
+            
         </div>
     );
-};
-
-// עיצוב חוזר לכפתורי הנאב-בר
-const navButtonStyle = {
-    background: 'transparent',
-    border: 'none',
-    color: '#cbd5e1',
-    fontSize: '16px',
-    cursor: 'pointer',
-    fontWeight: '500',
-    transition: 'color 0.2s',
 };
 
 export default Lobby;
