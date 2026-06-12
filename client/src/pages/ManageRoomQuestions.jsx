@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { createQuestion, getQuestionsByRoom, updateQuestion, deleteQuestion } from '../api/questionApi'; 
 
 // הייבוא של הכלים הנקיים שלנו!
-import Navbar from '../components/Navbar';
-import Modal from '../components/Modal';
+import Navbar from '../components/Navbar/Navbar';
+import Modal from '../components/Modal/Modal';
 import { useFetch } from '../hooks/useFetch';
 
 const EMPTY_FORM = {

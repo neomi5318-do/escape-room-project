@@ -1,4 +1,5 @@
 // 1. הגדרת ההוק. הוא מקבל 2 דברים: פונקציה להפעיל, ופרמטר (כמו טוקן או ID)
+import { useState, useEffect } from 'react';
 export const useFetch = (apiFunction, param = null) => {
 
     // 2. פותחים 3 סטייטים שינהלו לנו את המסך

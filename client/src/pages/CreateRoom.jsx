@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { createRoom } from '../api/roomApi';
 
 // ייבוא הקומפוננטות שלנו!
-import Navbar from '../components/Navbar';
-import Modal from '../components/Modal';
+import Navbar from '../components/Navbar/Navbar';
+import Modal from '../components/Modal/Modal';
 
 const CreateRoom = () => {
     const navigate = useNavigate();
