@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { createQuestion, getQuestionsByRoom, updateQuestion, deleteQuestion } from '../api/questionApi'; 
-
+import { createQuestion, getQuestionsByRoom, updateQuestion, deleteQuestion } from '../api/questionApi';
+import { getAssets } from '../api/assetApi'; // ה-API החדש שיודע לעבוד עם עמודים
+import AssetGallery from '../components/AssetGallery/AssetGallery';
 // הייבוא של הכלים הנקיים שלנו!
 import Navbar from '../components/Navbar/Navbar';
 import Modal from '../components/Modal/Modal';
@@ -10,29 +11,37 @@ import { useFetch } from '../hooks/useFetch';
 const EMPTY_FORM = {
     story_text: '', question_text: '', question_type: 'text',
     correct_answer: '', hint_text: '', success_message: '',
-    option_a: '', option_b: '', option_c: '', option_d: ''
+    option_a: '', option_b: '', option_c: '', option_d: '',
+    selected_image: '', selected_audio: ''
 };
 
 const ManageRoomQuestions = () => {
     const { roomId } = useParams();
     const navigate = useNavigate();
 
-    // 1. שאיבת הנתונים הראשונית עם ההוק שלנו
+    // 1. שאיבת הנתונים הראשונית של שאלות החדר
     const { data, loading, error } = useFetch(getQuestionsByRoom, roomId);
-    const [questions, setQuestions] = useState([]); 
-    
-    const [selectedQuestionId, setSelectedQuestionId] = useState(null); 
+    const [questions, setQuestions] = useState([]);
+
+    const [selectedQuestionId, setSelectedQuestionId] = useState(null);
     const [formData, setFormData] = useState(EMPTY_FORM);
     const [isDirty, setIsDirty] = useState(false);
 
     // 2. סטייטים לניהול כל המודאלים (מחליפים את כל ה-alerts וה-confirms)
     const [successMessage, setSuccessMessage] = useState('');
     const [questionToDelete, setQuestionToDelete] = useState(null);
-    const [pendingSwitch, setPendingSwitch] = useState(null); // שומר לאיזה שלב המשתמש ניסה לעבור
-    const [showWarningModal, setShowWarningModal] = useState(false); 
-    const [showUnsavedModal, setShowUnsavedModal] = useState(false); 
+    const [pendingSwitch, setPendingSwitch] = useState(null);
+    const [showWarningModal, setShowWarningModal] = useState(false);
+    const [showUnsavedModal, setShowUnsavedModal] = useState(false);
 
-    // עדכון הסטייט המקומי ברגע שההוק מסיים להביא נתונים
+    // --- 3. מערכת גלריית הנכסים המקצועית (Server-Side Pagination) ---
+    const [assetGallery, setAssetGallery] = useState({ show: false, type: '' });
+    const [assets, setAssets] = useState([]); // שומר את הפריטים שמשכנו מהשרת
+    const [currentPage, setCurrentPage] = useState(1); // העמוד הנוכחי שאנחנו בו
+    const [hasMoreAssets, setHasMoreAssets] = useState(true); // האם יש עוד פריטים בשרת?
+    const [isGalleryLoading, setIsGalleryLoading] = useState(false); // אנימציית טעינה לגלריה
+
+    // עדכון הסטייט המקומי ברגע שההוק מסיים להביא נתוני שאלות
     useEffect(() => {
         if (data && data.questions) {
             setQuestions(data.questions);
@@ -42,13 +51,13 @@ const ManageRoomQuestions = () => {
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
-        setIsDirty(true); 
+        setIsDirty(true);
     };
 
     // --- ניהול מעברים חכם עם מודאל במקום Confirm ---
     const handleSelectQuestion = (q) => {
         if (isDirty) {
-            setPendingSwitch(q); // מדליק את מודאל האזהרה למעבר
+            setPendingSwitch(q);
             return;
         }
         executeSwitch(q);
@@ -56,13 +65,12 @@ const ManageRoomQuestions = () => {
 
     const handleAddNewClick = () => {
         if (isDirty) {
-            setPendingSwitch('NEW'); // מדליק את מודאל האזהרה למעבר
+            setPendingSwitch('NEW');
             return;
         }
         executeSwitch('NEW');
     };
 
-    // הפונקציה שמופעלת רק אם אין שינויים, או אם המשתמש אישר במודאל לעבור בכל זאת
     const executeSwitch = (target) => {
         if (target === 'NEW') {
             setSelectedQuestionId(null);
@@ -72,23 +80,80 @@ const ManageRoomQuestions = () => {
             setFormData({
                 story_text: target.story_text || '', question_text: target.question_text || '', question_type: target.question_type || 'text',
                 correct_answer: target.correct_answer || '', hint_text: target.hint_text || '', success_message: target.success_message || '',
-                option_a: target.option_a || '', option_b: target.option_b || '', option_c: target.option_c || '', option_d: target.option_d || ''
+                option_a: target.option_a || '', option_b: target.option_b || '', option_c: target.option_c || '', option_d: target.option_d || '',
+                selected_image: target.selected_image || '', selected_audio: target.selected_audio || ''
             });
         }
         setIsDirty(false);
-        setPendingSwitch(null); // מכבה את מודאל האזהרה
+        setPendingSwitch(null);
+    };
+
+    // --- פונקציות לניהול הגלריה שמדברות עם השרת ---
+
+    const openGallery = async (type) => {
+        setAssetGallery({ show: true, type: type });
+        setAssets([]); // מנקים גלריה קודמת
+        setCurrentPage(1);
+        setIsGalleryLoading(true);
+
+        try {
+            // מבקשים מהשרת את עמוד 1, 10 פריטים
+            const responseData = await getAssets(type, 1, 10);
+            if (responseData.success) {
+                setAssets(responseData.assets);
+                setHasMoreAssets(responseData.hasMore);
+            }
+        } catch (err) {
+            console.error("שגיאה במשיכת נכסים", err);
+        } finally {
+            setIsGalleryLoading(false);
+        }
+    };
+
+    const handleLoadMoreAssets = async () => {
+        const nextPage = currentPage + 1;
+        setIsGalleryLoading(true);
+
+        try {
+            // מבקשים מהשרת את העמוד הבא
+            const responseData = await getAssets(assetGallery.type, nextPage, 10);
+            if (responseData.success) {
+                // לוקחים את הפריטים שכבר יש לנו, ומוסיפים להם את החדשים!
+                setAssets(prevAssets => [...prevAssets, ...responseData.assets]);
+                setCurrentPage(nextPage);
+                setHasMoreAssets(responseData.hasMore);
+            }
+        } catch (err) {
+            console.error("שגיאה במשיכת נכסים נוספים", err);
+        } finally {
+            setIsGalleryLoading(false);
+        }
+    };
+
+    const closeGallery = () => {
+        setAssetGallery({ show: false, type: '' });
+        setAssets([]); // מנקים זיכרון כשסוגרים את הגלריה
+    };
+
+    const handleSelectAsset = (assetId) => {
+        if (assetGallery.type === 'image') {
+            setFormData({ ...formData, selected_image: assetId });
+        } else if (assetGallery.type === 'audio') {
+            setFormData({ ...formData, selected_audio: assetId });
+        }
+        setIsDirty(true);
+        closeGallery();
     };
 
     // --- שמירה ומחיקה (עדכון מקומי כדי לחסוך טעינות) ---
     const handleSubmitQuestion = async (e) => {
-        e.preventDefault(); 
+        e.preventDefault();
         try {
             if (selectedQuestionId) {
                 const res = await updateQuestion(selectedQuestionId, formData);
                 if (res && res.success) {
                     setSuccessMessage('השלב עודכן בהצלחה! ✨');
                     setIsDirty(false);
-                    // עדכון אופטימי בלקוח
                     setQuestions(questions.map(q => q.id === selectedQuestionId ? { ...q, ...formData } : q));
                 }
             } else {
@@ -98,7 +163,6 @@ const ManageRoomQuestions = () => {
                     setSuccessMessage('השלב החדש נוסף לחדר בהצלחה! 🚀');
                     setIsDirty(false);
                     setFormData(EMPTY_FORM);
-                    // מביאים את הרשימה המעודכנת מהשרת כדי לקבל את ה-ID החדש
                     const freshData = await getQuestionsByRoom(roomId);
                     if (freshData.success) setQuestions(freshData.questions);
                 }
@@ -110,20 +174,20 @@ const ManageRoomQuestions = () => {
 
     const handleDeleteClick = (id, e) => {
         e.stopPropagation();
-        setQuestionToDelete(id); // מדליק מודאל מחיקה
+        setQuestionToDelete(id);
     };
 
     const executeDelete = async () => {
         try {
             await deleteQuestion(questionToDelete);
             setQuestions(questions.filter(q => q.id !== questionToDelete));
-            
+
             if (selectedQuestionId === questionToDelete) {
                 setSelectedQuestionId(null);
                 setFormData(EMPTY_FORM);
                 setIsDirty(false);
             }
-            setQuestionToDelete(null); // סוגר מודאל
+            setQuestionToDelete(null);
             setSuccessMessage('השלב נמחק בהצלחה! 🗑️');
         } catch (err) {
             alert('שגיאה במחיקה.');
@@ -137,15 +201,14 @@ const ManageRoomQuestions = () => {
             return;
         }
         if ((questions?.length || 0) < 5) {
-            setShowWarningModal(true); 
+            setShowWarningModal(true);
             return;
         }
-        completeRoom(); 
+        completeRoom();
     };
 
     const completeRoom = () => {
         setSuccessMessage('החדר נשמר ופורסם בהצלחה! 🏆');
-        // ננווט לדשבורד רק אחרי שהוא לוחץ "אישור" על המודאל הירוק
     };
 
     if (loading) return <div style={{ textAlign: 'center', marginTop: '100px' }}>טוען את נתוני החדר... ⏳</div>;
@@ -153,24 +216,23 @@ const ManageRoomQuestions = () => {
 
     return (
         <div style={{ backgroundColor: '#f3f4f6', minHeight: '100vh', fontFamily: 'Arial, sans-serif', direction: 'rtl' }}>
-            
-            {/* הסרגל העליון החדש שלנו! */}
+
             <Navbar />
 
             <div style={{ display: 'flex', gap: '20px', padding: '20px', maxWidth: '1400px', margin: '0 auto' }}>
-                
+
                 {/* --- עמודה 1: רשימת החידות והשלבים --- */}
                 <div style={{ flex: '1.2', border: '1px solid #d1d5db', borderRadius: '8px', backgroundColor: '#fff', padding: '15px', display: 'flex', flexDirection: 'column', maxHeight: '80vh', overflowY: 'auto' }}>
                     <h3 style={{ marginTop: 0, color: '#4b5563', borderBottom: '2px solid #e5e7eb', paddingBottom: '10px' }}>
                         שלבי החדר ({questions.length})
                     </h3>
-                    
+
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flexGrow: 1 }}>
                         {questions.map((q, index) => {
                             const isSelected = selectedQuestionId === q.id;
                             return (
-                                <div 
-                                    key={q.id} 
+                                <div
+                                    key={q.id}
                                     onClick={() => handleSelectQuestion(q)}
                                     style={{ padding: '12px', border: isSelected ? '2px solid #8b5cf6' : '1px solid #e5e7eb', borderRadius: '6px', cursor: 'pointer', backgroundColor: isSelected ? '#f5f3ff' : '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                                 >
@@ -201,8 +263,18 @@ const ManageRoomQuestions = () => {
                         </h2>
                         {isDirty && <span style={{ color: '#d97706', fontWeight: 'bold', fontSize: '14px' }}>* קיימים שינויים שלא נשמרו</span>}
                     </div>
-                    
+
                     <form onSubmit={handleSubmitQuestion} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+
+                        {/* תצוגה של נכס שנבחר לשאלה */}
+                        {(formData.selected_image || formData.selected_audio) && (
+                            <div style={{ display: 'flex', gap: '10px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', padding: '10px', borderRadius: '6px' }}>
+                                <strong>נכסים מקושרים לשלב:</strong>
+                                {formData.selected_image && <span>🖼️ תמונה (ID: {formData.selected_image})</span>}
+                                {formData.selected_audio && <span style={{ marginRight: '15px' }}>🎵 סאונד (ID: {formData.selected_audio})</span>}
+                            </div>
+                        )}
+
                         <label style={{ fontWeight: 'bold', color: '#374151' }}>טקסט סיפור (העלילה שלפני החידה):</label>
                         <textarea name="story_text" value={formData.story_text} onChange={handleInputChange} rows="3" placeholder="למשל: הדלת נפתחה והגעתם לחדר חשוך..." style={{ padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db', backgroundColor: '#f9fafb' }} />
 
@@ -250,9 +322,17 @@ const ManageRoomQuestions = () => {
                     <div>
                         <h3 style={{ marginTop: 0, color: '#4b5563' }}>ניהול אלמנטים</h3>
                         <p style={{ fontSize: '14px', color: '#6b7280' }}>הוספת רכיבים לחדר:</p>
-                        <button style={{ width: '100%', padding: '12px', marginBottom: '10px', cursor: 'pointer', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '6px', fontWeight: 'bold' }}>+ הוסף פופ-אפ</button>
-                        <button style={{ width: '100%', padding: '12px', marginBottom: '10px', cursor: 'pointer', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '6px', fontWeight: 'bold' }}>+ הוסף תמונה</button>
-                        <button style={{ width: '100%', padding: '12px', marginBottom: '10px', cursor: 'pointer', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '6px', fontWeight: 'bold' }}>+ הוסף קובץ שמע</button>
+
+                        <button type="button" style={{ width: '100%', padding: '12px', marginBottom: '10px', cursor: 'not-allowed', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '6px', fontWeight: 'bold', color: '#9ca3af' }}>
+                            ⚙️ פופ-אפ מותאם (בקרוב)
+                        </button>
+                        {/* כפתורים הפותחים את הגלריה מהשרת */}
+                        <button type="button" onClick={() => openGallery('image')} style={{ width: '100%', padding: '12px', marginBottom: '10px', cursor: 'pointer', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', fontWeight: 'bold', color: '#1d4ed8' }}>
+                            🖼️ בחר תמונת רמז
+                        </button>
+                        <button type="button" onClick={() => openGallery('audio')} style={{ width: '100%', padding: '12px', marginBottom: '10px', cursor: 'pointer', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', fontWeight: 'bold', color: '#1d4ed8' }}>
+                            🎵 הוסף קובץ שמע
+                        </button>
                     </div>
 
                     <div style={{ marginTop: '30px' }}>
@@ -264,61 +344,72 @@ const ManageRoomQuestions = () => {
                 </div>
             </div>
 
-            {/* --- אזור המודאלים הגנריים --- */}
+            {/* --- חלון גלריית הנכסים החכמה --- */}
+            <AssetGallery
+                show={assetGallery.show}
+                type={assetGallery.type}
+                assets={assets}
+                isGalleryLoading={isGalleryLoading}
+                hasMoreAssets={hasMoreAssets}
+                onClose={closeGallery}
+                onSelectAsset={handleSelectAsset}
+                onLoadMore={handleLoadMoreAssets}
+            />
 
+            {/* --- אזור המודאלים הגנריים --- */}
             {pendingSwitch && (
-                <Modal 
+                <Modal
                     title="⚠️ שינויים לא שמורים"
                     titleColor="#d97706"
                     message="יש לך שינויים שלא שמרת בטופס הנוכחי. האם לעזוב ולמחוק את השינויים?"
                     confirmText="כן, עזוב ללא שמירה"
                     confirmType="danger"
-                    onConfirm={() => executeSwitch(pendingSwitch)} 
+                    onConfirm={() => executeSwitch(pendingSwitch)}
                     cancelText="חזור לשמור"
-                    onCancel={() => setPendingSwitch(null)} 
+                    onCancel={() => setPendingSwitch(null)}
                 />
             )}
 
             {questionToDelete && (
-                <Modal 
+                <Modal
                     title="מחיקת שלב"
                     message="האם אתה בטוח שברצונך למחוק שלב זה לצמיתות?"
                     confirmText="כן, מחק!"
                     confirmType="danger"
-                    onConfirm={executeDelete} 
+                    onConfirm={executeDelete}
                     cancelText="ביטול"
-                    onCancel={() => setQuestionToDelete(null)} 
+                    onCancel={() => setQuestionToDelete(null)}
                 />
             )}
 
             {showUnsavedModal && (
-                <Modal 
+                <Modal
                     title="⚠️ טופס לא שמור"
                     titleColor="#d97706"
                     message="התחלת לכתוב מידע בטופס אבל עדיין לא לחצת על שמור. לסיים את החדר בכל זאת?"
                     confirmText="סיים ללא שמירה"
                     confirmType="danger"
-                    onConfirm={() => { setShowUnsavedModal(false); completeRoom(); }} 
+                    onConfirm={() => { setShowUnsavedModal(false); completeRoom(); }}
                     cancelText="חזור לשמור"
-                    onCancel={() => setShowUnsavedModal(false)} 
+                    onCancel={() => setShowUnsavedModal(false)}
                 />
             )}
 
             {showWarningModal && (
-                <Modal 
+                <Modal
                     title="מומלץ להוסיף חידות"
                     titleColor="#3b82f6"
                     message={`שמנו לב שיצרת רק ${questions.length} שלבים. מומלץ ליצור לפחות 5 שלבים לחוויה מושלמת.`}
                     confirmText="סיום ופרסום"
                     confirmType="primary"
-                    onConfirm={completeRoom} 
+                    onConfirm={completeRoom}
                     cancelText="חזור להוסיף"
-                    onCancel={() => setShowWarningModal(false)} 
+                    onCancel={() => setShowWarningModal(false)}
                 />
             )}
 
             {successMessage && (
-                <Modal 
+                <Modal
                     title="פעולה הושלמה"
                     titleColor="#10b981"
                     message={successMessage}
@@ -327,7 +418,7 @@ const ManageRoomQuestions = () => {
                     onConfirm={() => {
                         setSuccessMessage('');
                         if (successMessage.includes('נשמר ופורסם')) navigate('/developer');
-                    }} 
+                    }}
                 />
             )}
 
