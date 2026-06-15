@@ -1,12 +1,14 @@
 
-import React from 'react'; 
+import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Lobby from './pages/Lobby';
 import DeveloperDashboard from './pages/DeveloperDashboard';
-import CreateRoom from './pages/CreateRoom';  
-import ManageRoomQuestions from './pages/ManageRoomQuestions';  
+import CreateRoom from './pages/CreateRoom';
+import ManageRoomQuestions from './pages/ManageRoomQuestions';
+import EditRoom from './pages/EditRoom';
+import PlayRoom from './pages/PlayRoom'; 
 function App() {
   return (
     <Routes>
@@ -16,7 +18,10 @@ function App() {
       <Route path="/lobby" element={<Lobby />} />
       <Route path="/developer" element={<DeveloperDashboard />} />
       <Route path="/developer/create-room" element={<CreateRoom />} />
+      <Route path="/developer/edit-room/:roomId" element={<EditRoom />} />
       <Route path="/manage-room/:roomId" element={<ManageRoomQuestions />} />
+      <Route path="/play/:roomId" element={<PlayRoom />} />
+
     </Routes>
   );
 }

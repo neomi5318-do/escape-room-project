@@ -1,4 +1,5 @@
 import RoomModel from '../models/roomModel.js';
+
 const getAllRooms = async (req, res) => {
     try {
         const rooms = await RoomModel.getAllRooms();
@@ -99,10 +100,24 @@ const deleteRoom = async (req, res) => {
     }
 };
 
+
+///////////
+const getRoomById = async (req, res) => {
+    try {
+        const room = await RoomModel.findById(req.params.id);
+        res.json({ success: true, room: room });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+
+// וכמובן להוסיף את getRoomById לתוך ה-export default למטה.
 export default {
     getAllRooms,
     createRoom,
     getMyRooms,
     updateRoom,
-    deleteRoom
+    deleteRoom,
+    getRoomById
 };

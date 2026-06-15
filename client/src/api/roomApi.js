@@ -22,3 +22,7 @@ export const updateRoom = async (roomId, roomData) => {
 export const deleteRoom = async (roomId) => {
     return await apiClient(`/rooms/delete/${roomId}`, 'DELETE');
 };
+///////////////
+export const getRoomById = async (roomId) => {
+    return await apiClient(`/rooms/${roomId}`);
+};

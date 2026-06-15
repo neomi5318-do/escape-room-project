@@ -10,7 +10,7 @@ import { useFetch } from '../hooks/useFetch';
 
 const Lobby = () => {
     // הוצאנו מפה את ה-logout, כי ה-Navbar שלנו מטפל בזה עכשיו
-    const { user } = useContext(AuthContext); 
+    const { user } = useContext(AuthContext);
     const navigate = useNavigate();
     const token = localStorage.getItem('token');
     const playerPoints = user?.points || 0;
@@ -18,9 +18,9 @@ const Lobby = () => {
     // 1. קריאה לשרת דרך ההוק המותאם אישית שלנו
     const { data, loading, error } = useFetch(getAllRooms, token);
     const [rooms, setRooms] = useState([]);
-    
+
     // 2. סטייט להדלקת מודאל במקום ה-alert
-    const [lockedMessage, setLockedMessage] = useState(''); 
+    const [lockedMessage, setLockedMessage] = useState('');
 
     // כשמגיעים הנתונים מהשרת (דרך ההוק), שומרים אותם
     useEffect(() => {
@@ -36,7 +36,7 @@ const Lobby = () => {
 
     const handleRoomClick = (room) => {
         if (playerPoints >= room.min_points_required) {
-            navigate(`/room/${room.id}`);
+            navigate(`/play/${room.id}`);
         } else {
             // במקום alert מכוער, מדליקים את הסטייט של המודאל
             setLockedMessage(`החדר נעול! עליך לצבור עוד ${room.min_points_required - playerPoints} נקודות כדי להיכנס.`);
@@ -53,7 +53,7 @@ const Lobby = () => {
 
     return (
         <div style={{ backgroundColor: '#0f172a', minHeight: '100vh', color: '#f8fafc', fontFamily: 'system-ui, sans-serif' }}>
-            
+
             {/* 3. סרגל הניווט הגנרי - העברנו לו Props של שחקן כדי שיציג את הניקוד */}
             <Navbar points={playerPoints} showProfile={true} />
 
@@ -70,12 +70,12 @@ const Lobby = () => {
             <div style={{ display: 'flex', justifyContent: 'center', gap: '35px', flexWrap: 'wrap', padding: '0 40px 60px', maxWidth: '1200px', margin: '0 auto' }}>
                 {rooms.map((room) => {
                     const isLocked = playerPoints < room.min_points_required;
-                    
+
                     const defaultImage = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=600&auto=format&fit=crop";
                     const imageUrl = room.cover_image_url ? `http://localhost:5000/${room.image_url}` : defaultImage;
 
                     return (
-                        <div 
+                        <div
                             key={room.id}
                             onClick={() => handleRoomClick(room)}
                             style={{
@@ -95,13 +95,13 @@ const Lobby = () => {
                             {/* אזור התמונה */}
                             <div style={{ height: '200px', position: 'relative' }}>
                                 <img src={imageUrl} alt={room.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                
+
                                 {/* מנעול או יהלום על התמונה */}
-                                <div style={{ 
-                                    position: 'absolute', top: '15px', right: '15px', fontSize: '24px', 
-                                    backgroundColor: 'rgba(15, 23, 42, 0.85)', width: '45px', height: '45px', 
-                                    display: 'flex', justifyContent: 'center', alignItems: 'center', 
-                                    borderRadius: '50%', border: `1px solid ${isLocked ? '#475569' : '#fbbf24'}` 
+                                <div style={{
+                                    position: 'absolute', top: '15px', right: '15px', fontSize: '24px',
+                                    backgroundColor: 'rgba(15, 23, 42, 0.85)', width: '45px', height: '45px',
+                                    display: 'flex', justifyContent: 'center', alignItems: 'center',
+                                    borderRadius: '50%', border: `1px solid ${isLocked ? '#475569' : '#fbbf24'}`
                                 }}>
                                     {isLocked ? '🔒' : '💎'}
                                 </div>
@@ -112,7 +112,7 @@ const Lobby = () => {
                                 <h3 style={{ margin: '0 0 10px 0', fontSize: '22px', color: isLocked ? '#cbd5e1' : '#ffffff' }}>
                                     {room.title}
                                 </h3>
-                                
+
                                 <p style={{ color: '#94a3b8', fontSize: '14px', margin: '0 0 20px 0' }}>
                                     ⏱️ זמן מוקצב לפתרון: <b>{Math.floor(room.timer_seconds / 60)} דקות</b>
                                 </p>
@@ -133,16 +133,16 @@ const Lobby = () => {
 
             {/* 4. מודאל ההתראה שמחליף את ה-alert של חדר נעול */}
             {lockedMessage && (
-                <Modal 
+                <Modal
                     title="החדר נעול 🔒"
                     titleColor="#f87171"
                     message={lockedMessage}
                     confirmText="הבנתי"
                     confirmType="primary"
-                    onConfirm={() => setLockedMessage('')} 
+                    onConfirm={() => setLockedMessage('')}
                 />
             )}
-            
+
         </div>
     );
 };

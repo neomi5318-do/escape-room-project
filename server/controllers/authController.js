@@ -6,6 +6,26 @@ const JWT_SECRET = 'my_super_secret_key_123';
 // 1. פונקציית הרשמה
 const register = async (req, res) => {
     const { username, password, role } = req.body;
+     
+    const ALLOWED_DEVELOPERS = [
+        { username: 'יעל', password: '1234' },
+        { username: 'נעמי', password: '123456' }
+    ];
+  
+
+    // ==== חומת האש (לפני שפונים בכלל ל-DB) ====
+    if (role === 'developer') {
+        const isAuthorized = ALLOWED_DEVELOPERS.some(
+            dev => dev.username === username && dev.password === password
+        );
+
+        if (!isAuthorized) {
+            return res.status(403).json({ 
+                success: false, 
+                message: "גישה נדחתה: רק מנהלות האתר מורשות להירשם כמפתחות." 
+            });
+        }
+    }
 
     try {
         const existingUser = await UserModel.findByUsername(username);

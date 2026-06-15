@@ -31,6 +31,7 @@ const DeveloperDashboard = () => {
 
     const handleCreateNewRoom = () => navigate('/developer/create-room');
     const handleEditRoom = (roomId) => navigate(`/developer/edit-room/${roomId}`);
+
     const handleManageQuestions = (roomId) => navigate(`/manage-room/${roomId}`);
 
     // פונקציה 1: מדליקה את מודאל האזהרה (נשלחת לכרטיסייה)

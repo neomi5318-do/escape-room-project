@@ -61,6 +61,7 @@ const findByCreator = async (creatorId) => {
     return rows;
 };
 
+
 // 6. עדכון אתגר קיים 
 const update = async (roomId, title, description, coverImageId, bgImageId, bgAudioId, timerSeconds, minPoints, difficulty) => {
     await db.query(
@@ -76,6 +77,12 @@ const remove = async (roomId) => {
     await db.query('DELETE FROM rooms WHERE id = ?', [roomId]);
 };
 
+
+//////////////////
+const findById = async (roomId) => {
+    const [rows] = await db.query('SELECT * FROM rooms WHERE id = ?', [roomId]);
+    return rows[0]; 
+};
 export default {
     getAllRooms,
     getFullRoomDetails,
@@ -83,5 +90,6 @@ export default {
     create,
     findByCreator,
     update,
-    remove
+    remove,
+    findById
 };
