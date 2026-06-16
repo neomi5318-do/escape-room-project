@@ -27,9 +27,13 @@ const getFullRoomDetails = async (roomId) => {
 };
 
 // 3. שליפת אלמנטים מיוחדים שיש באתגר
+// models/roomModel.js
+
+// models/roomModel.js
+
 const getRoomElements = async (roomId) => {
     const query = `
-        SELECT e.id, e.element_type, e.button_label, a.file_url AS asset_url
+        SELECT e.id, e.element_type, e.button_label, a.file_url AS asset_url, e.element_text 
         FROM room_elements e
         LEFT JOIN assets a ON e.asset_id = a.id
         WHERE e.room_id = ?
@@ -37,6 +41,16 @@ const getRoomElements = async (roomId) => {
     const [rows] = await db.query(query, [roomId]);
     return rows;
 };
+// const getRoomElements = async (roomId) => {
+//     const query = `
+//         SELECT e.id, e.element_type, e.button_label, a.file_url AS asset_url
+//         FROM room_elements e
+//         LEFT JOIN assets a ON e.asset_id = a.id
+//         WHERE e.room_id = ?
+//     `;
+//     const [rows] = await db.query(query, [roomId]);
+//     return rows;
+// };
 
 // 4. יצירת אתגר חדש 
 const create = async (title, description, creatorId, coverImageId, bgImageId, bgAudioId, timerSeconds, minPoints, difficulty) => {
@@ -61,7 +75,6 @@ const findByCreator = async (creatorId) => {
     return rows;
 };
 
-
 // 6. עדכון אתגר קיים 
 const update = async (roomId, title, description, coverImageId, bgImageId, bgAudioId, timerSeconds, minPoints, difficulty) => {
     await db.query(
@@ -77,12 +90,11 @@ const remove = async (roomId) => {
     await db.query('DELETE FROM rooms WHERE id = ?', [roomId]);
 };
 
-
-//////////////////
 const findById = async (roomId) => {
     const [rows] = await db.query('SELECT * FROM rooms WHERE id = ?', [roomId]);
     return rows[0]; 
 };
+
 export default {
     getAllRooms,
     getFullRoomDetails,

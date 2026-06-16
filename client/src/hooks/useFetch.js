@@ -9,6 +9,10 @@ export const useFetch = (apiFunction, param = null) => {
 
     // 3. יוז-אפקט שירוץ פעם אחת כשהעמוד עולה
     useEffect(() => {
+                if (!localStorage.getItem('token')) {
+            setLoading(false);
+            return;
+        }
         const fetchData = async () => {
             setLoading(true); // מדליק את מסך הטעינה
             try {

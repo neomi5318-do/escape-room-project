@@ -14,3 +14,7 @@ export const submitPlayerAnswer = async (questionId, player_answer) => {
 export const finishPlayerRoom = async (roomId) => {
     return await apiClient(`/game/room/${roomId}/finish`, 'POST');
 };
+export const requestHint = async (questionId) => {
+    // קריאת GET רגילה התואמת ל-apiClient שלך
+    return await apiClient(`/game/question/${questionId}/hint`, 'POST');
+};
