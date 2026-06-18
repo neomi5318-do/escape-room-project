@@ -2,6 +2,7 @@ import express from 'express';
 import roomController from '../controllers/roomController.js';
 import authMiddleware from '../middleware/authMiddleware.js';
 import validationMiddleware from '../middleware/validationMiddleware.js';
+
 const router = express.Router();
 router.get('/',
      authMiddleware.verifyToken,
@@ -33,9 +34,10 @@ router.delete('/delete/:id',
     authMiddleware.restrictTo('developer'),
     roomController.deleteRoom
 );
-router.get('/:id', 
-    authMiddleware.verifyToken, 
-    authMiddleware.restrictTo('developer'), 
+router.get('/:id',
+    authMiddleware.verifyToken,
+    authMiddleware.restrictTo('developer'),
     roomController.getRoomById
 );
+
 export default router;

@@ -10,6 +10,9 @@ import EditRoom from './pages/EditRoom/EditRoom';
 import PlayRoom from './pages/PlayRoom/PlayRoom'; 
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'; 
 
+import './assets/fonts/fonts.css';
+
+
 function App() {
   return (
     <Routes>

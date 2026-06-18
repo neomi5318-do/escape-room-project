@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect } from 'react';
 
 // יצירת ה-Context

@@ -1,3 +1,4 @@
+
 import db from '../config/db.js';
 
 // 1. יצירת שאלה חדשה
